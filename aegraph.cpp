@@ -231,11 +231,40 @@ std::vector<std::vector<int>> AEGraph::get_paths_to(
 
 std::vector<std::vector<int>> AEGraph::possible_double_cuts() const {
     // 10p
-    return {};
+    // Devine o functie recursiva, care se aplica fiecarui fiu in parte
+    // Recursivitatea se aplica pana cand nu mai are fii ?
+
+    // Update - detecteza corect toate secventele
+    //        - nu afiseaza corect indecsii
+    std::vector<std::vector<int>> doubleCuts;
+    std::cerr << "Current graph " << repr() << "\n";
+    std::cerr << "Number of subgraphs = " << num_subgraphs() << "\n\n";
+
+    for (int i = 0; i < num_subgraphs(); i++) {
+        std::vector<std::vector<int>> lastR;
+        if (num_subgraphs() == 1 && num_atoms()==0 && repr().find('(') == std::string::npos) {
+            if (AEGraph(subgraphs[i]).num_subgraphs() || (AEGraph(subgraphs[i]).num_atoms() == AEGraph(subgraphs[i]).size())) {
+                std::cerr << "Gasit " << repr() << "\n";
+                std::cerr << "SubSubgraphs " << AEGraph(subgraphs[i]).repr() << "\n\n";
+                std::vector<int> r;
+                r.push_back(i);
+                doubleCuts.push_back(r);
+                return doubleCuts;
+            }
+        }
+
+        lastR = AEGraph(subgraphs[i]).possible_double_cuts();
+        for (auto j : lastR) {
+            doubleCuts.push_back(j);
+        }
+    }
+
+    return doubleCuts;
 }
 
 AEGraph AEGraph::double_cut(std::vector<int> where) const {
     // 10p
+
     return AEGraph("()");
 }
 
