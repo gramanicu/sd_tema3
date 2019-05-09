@@ -237,28 +237,28 @@ std::vector<std::vector<int>> AEGraph::possible_double_cuts() const {
     // Update - detecteza corect toate secventele
     //        - nu afiseaza corect indecsii
     std::vector<std::vector<int>> doubleCuts;
+    std::cerr << "Current graph " << repr() << "\n";
+    std::cerr << "Number of subgraphs = " << num_subgraphs() << "\n\n";
 
     for (int i = 0; i < num_subgraphs(); i++) {
-        if (num_subgraphs() == 1 && num_atoms() == 0 &&
-            repr().find('(') == std::string::npos) {
-            if (AEGraph(subgraphs[i]).num_subgraphs() ||
-                (AEGraph(subgraphs[i]).num_atoms() ==
-                 AEGraph(subgraphs[i]).size())) {
+        std::vector<std::vector<int>> lastR;
+        if (num_subgraphs() == 1 && num_atoms()==0 && repr().find('(') == std::string::npos) {
+            if (AEGraph(subgraphs[i]).num_subgraphs() || (AEGraph(subgraphs[i]).num_atoms() == AEGraph(subgraphs[i]).size())) {
                 std::cerr << "Gasit " << repr() << "\n";
                 std::cerr << "SubSubgraphs " << i << "\n\n";
                 std::vector<int> r;
                 r.push_back(i);
                 doubleCuts.push_back(r);
+                return doubleCuts;
             }
         }
 
-        std::vector<std::vector<int>> lastR;
         lastR = AEGraph(subgraphs[i]).possible_double_cuts();
         for (auto j : lastR) {
             doubleCuts.push_back(j);
         }
     }
-    
+
     return doubleCuts;
 }
 
