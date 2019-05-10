@@ -245,7 +245,7 @@ std::vector<std::vector<int>> AEGraph::possible_double_cuts() const {
         if (num_subgraphs() == 1 && num_atoms()==0 && repr().find('(') == std::string::npos) {
             if (AEGraph(subgraphs[i]).num_subgraphs() || (AEGraph(subgraphs[i]).num_atoms() == AEGraph(subgraphs[i]).size())) {
                 std::cerr << "Gasit " << repr() << "\n";
-                std::cerr << "SubSubgraphs " << i << "\n\n";
+                
                 std::vector<int> r;
                 r.push_back(i);
                 doubleCuts.push_back(r);
@@ -264,7 +264,8 @@ std::vector<std::vector<int>> AEGraph::possible_double_cuts() const {
 
 AEGraph AEGraph::double_cut(std::vector<int> where) const {
     // 10p
-
+    
+    
     return AEGraph("()");
 }
 
