@@ -229,43 +229,37 @@ std::vector<std::vector<int>> AEGraph::get_paths_to(
     return paths;
 }
 
-std::vector<std::vector<int>> AEGraph::possible_double_cuts() const {
-    // 10p
-    // Devine o functie recursiva, care se aplica fiecarui fiu in parte
-    // Recursivitatea se aplica pana cand nu mai are fii ?
-
-    // Update - detecteza corect toate secventele
-    //        - nu afiseaza corect indecsii
-    std::vector<std::vector<int>> doubleCuts;
-    std::cerr << "Current graph " << repr() << "\n";
-    std::cerr << "Number of subgraphs = " << num_subgraphs() << "\n\n";
-
-    for (int i = 0; i < num_subgraphs(); i++) {
-        std::vector<std::vector<int>> lastR;
-        if (num_subgraphs() == 1 && num_atoms()==0 && repr().find('(') == std::string::npos) {
-            if (AEGraph(subgraphs[i]).num_subgraphs() || (AEGraph(subgraphs[i]).num_atoms() == AEGraph(subgraphs[i]).size())) {
-                std::cerr << "Gasit " << repr() << "\n";
-                
-                std::vector<int> r;
-                r.push_back(i);
-                doubleCuts.push_back(r);
-                return doubleCuts;
-            }
-        }
-
-        lastR = AEGraph(subgraphs[i]).possible_double_cuts();
-        for (auto j : lastR) {
-            doubleCuts.push_back(j);
+void findCuts(const AEGraph* up, const AEGraph* curr, std::vector<int>& cp,
+              std::vector<std::vector<int>>& paths) {
+    if (up != nullptr) {
+        if (up->num_atoms() == 0 && up->num_subgraphs() == 1) {
+            std::vector<int> temp = cp;
+            temp.pop_back();
+            paths.push_back(temp);
         }
     }
 
-    return doubleCuts;
+    for (int it = 0; it < curr->subgraphs.size(); it++) {
+        std::vector<int> temp = cp;
+        temp.push_back(it);
+        findCuts(curr, &(curr->subgraphs[it]), temp, paths);
+    }
+}
+
+std::vector<std::vector<int>> AEGraph::possible_double_cuts() const {
+    std::vector<std::vector<int>> paths = {};
+
+    for (int it = 0; it < num_subgraphs(); it++) {
+        std::vector<int> cp = {it};
+        findCuts(nullptr, &(subgraphs[it]), cp, paths);
+    }
+
+    return paths;
 }
 
 AEGraph AEGraph::double_cut(std::vector<int> where) const {
     // 10p
-    
-    
+
     return AEGraph("()");
 }
 
