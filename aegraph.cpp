@@ -229,10 +229,17 @@ std::vector<std::vector<int>> AEGraph::get_paths_to(
     return paths;
 }
 
+/*  Recursive function to find the double cuts
+    up - the parent node of the current node
+    curr - the current node
+    cp - current path
+    path - all the paths found so far */
 void findCuts(const AEGraph* up, const AEGraph* curr, std::vector<int>& cp,
               std::vector<std::vector<int>>& paths) {
     if (up != nullptr) {
-        if (up->num_atoms() == 0 && up->num_subgraphs() == 1) {
+        if (up->num_subgraphs() == 1 && up->num_atoms() == 0) {
+            // We need to eliminate the last element of the current path
+            // to find the path to the current element
             std::vector<int> temp = cp;
             temp.pop_back();
             paths.push_back(temp);
@@ -240,12 +247,14 @@ void findCuts(const AEGraph* up, const AEGraph* curr, std::vector<int>& cp,
     }
 
     for (int it = 0; it < curr->subgraphs.size(); it++) {
+        // For every child we need another path based on its parents path
         std::vector<int> temp = cp;
         temp.push_back(it);
         findCuts(curr, &(curr->subgraphs[it]), temp, paths);
     }
 }
 
+// Task 1
 std::vector<std::vector<int>> AEGraph::possible_double_cuts() const {
     std::vector<std::vector<int>> paths = {};
 
@@ -257,10 +266,38 @@ std::vector<std::vector<int>> AEGraph::possible_double_cuts() const {
     return paths;
 }
 
-AEGraph AEGraph::double_cut(std::vector<int> where) const {
-    // 10p
+/* Search in the nodes then do the cut
+    parent - the parent of the node
+    curr - current node
+    where - the current path (where to cut)
+    iChild - what children is the current node to its parent */
+void recursiveCuts(AEGraph* parent, AEGraph* curr, std::vector<int>& where,
+                   int iChild) {
+    if (where.size() == 0) {
+        AEGraph toAdd = curr->subgraphs[0];
+        parent->subgraphs.erase(parent->subgraphs.begin() + iChild);
 
-    return AEGraph("()");
+        for (auto& it : toAdd.atoms) {
+            parent->atoms.push_back(it);
+        }
+
+        for (auto& it : toAdd.subgraphs) {
+            parent->subgraphs.push_back(it);
+        }
+
+        return;
+    } else {
+        int index = where.front();
+        where.erase(where.begin());
+        recursiveCuts(curr, &curr->subgraphs[index], where, index);
+    }
+}
+
+// Task 2
+AEGraph AEGraph::double_cut(std::vector<int> where) const {
+    AEGraph toModify(repr());
+    recursiveCuts(nullptr, &toModify, where, NULL);
+    return toModify;
 }
 
 std::vector<std::vector<int>> AEGraph::possible_erasures(int level) const {
