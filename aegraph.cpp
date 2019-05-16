@@ -310,7 +310,10 @@ std::vector<std::vector<int>> AEGraph::possible_erasures(int level) const {
 }
 
 // Task 4
-AEGraph AEGraph::erase(std::vector<int> where) const { return AEGraph("()"); }
+AEGraph AEGraph::erase(std::vector<int> where) const { 
+    
+    return AEGraph("()"); 
+}
 
 /*  A get_paths function that actually works well
     (while still not showing paths to single children, that can't be eliminated)
