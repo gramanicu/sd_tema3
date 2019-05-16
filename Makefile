@@ -44,5 +44,5 @@ cstest:
 # Creates the archive with the homework
 pack:
 	if [ ! -f README ]; then cp Readme.md README; fi
-	zip -FSr archive.zip README aegraph.cpp
+	zip -FSr archive.zip README aegraph.cpp aegraph.h
 	rm README
