@@ -302,7 +302,11 @@ AEGraph AEGraph::double_cut(std::vector<int> where) const {
 
 std::vector<std::vector<int>> AEGraph::possible_erasures(int level) const {
     // 10p
-    return {};
+    std::vector<int> possiblePaths;
+    std::vector<std::vector<int>> possibleErasures;
+    std::string representation;
+
+    return possibleErasures;
 }
 
 AEGraph AEGraph::erase(std::vector<int> where) const {
@@ -310,9 +314,69 @@ AEGraph AEGraph::erase(std::vector<int> where) const {
     return AEGraph("()");
 }
 
+// A get_paths function that actually works well
+// (while still not showing paths to single children, that can't be eliminated)
+// So, it is optimised for the deiterations function
+void betterGetPaths(const AEGraph* curr, const std::string query,
+                    std::vector<int>& cp,
+                    std::vector<std::vector<int>>& paths) {
+    for (int it = 0; it < curr->size(); it++) {
+        int k = curr->num_subgraphs();
+        if (it < k) {
+            if (curr->subgraphs[it].repr() == query && curr->size() > 1) {
+                // If we found it, we do not need to search it's children
+                std::vector<int> temp = cp;
+                temp.push_back(it);
+                paths.push_back(temp);
+            } else {
+                // Search in its children
+                std::vector<int> temp = cp;
+                temp.push_back(it);
+                betterGetPaths(&curr->subgraphs[it], query, temp, paths);
+            }
+        } else {
+            if (curr->atoms[it - k] == query && curr->size() > 1) {
+                std::vector<int> temp = cp;
+                temp.push_back(it);
+                paths.push_back(temp);
+            }
+        }
+    }
+}
+
+void recursiveDeiterations(const AEGraph* curr,
+                           std::vector<std::vector<int>>& paths) {
+    int k = curr->num_subgraphs();
+    for (int i = 0; i < curr->size(); i++) {
+        std::string query;
+
+        // If it is a subgraph
+        if (i < k) {
+            query = curr->subgraphs[i].repr();
+        } else {
+            // If it is a leaf
+            query = curr->atoms[i - k];
+        }
+
+        for (int j = 0; j < k; j++) {
+            if (j != i) {
+                std::vector<std::vector<int>> cp;
+                std::vector<int> aux;
+                aux.push_back(j);
+                betterGetPaths(&curr->subgraphs[j], query, aux, cp);
+                for (auto& it : cp) {
+                    paths.push_back(it);
+                }
+            }
+        }
+    }
+}
+
 std::vector<std::vector<int>> AEGraph::possible_deiterations() const {
     // 20p
-    return {};
+    std::vector<std::vector<int>> paths;
+    recursiveDeiterations(this, paths);
+    return paths;
 }
 
 AEGraph AEGraph::deiterate(std::vector<int> where) const {
