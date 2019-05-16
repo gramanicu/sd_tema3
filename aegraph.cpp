@@ -246,7 +246,7 @@ void findCuts(const AEGraph* up, const AEGraph* curr, std::vector<int>& cp,
         }
     }
 
-    for (int it = 0; it < curr->subgraphs.size(); it++) {
+    for (int it = 0; it < curr->num_subgraphs(); it++) {
         // For every child we need another path based on its parents path
         std::vector<int> temp = cp;
         temp.push_back(it);
@@ -271,7 +271,7 @@ std::vector<std::vector<int>> AEGraph::possible_double_cuts() const {
     curr - current node
     where - the current path (where to cut)
     iChild - what children is the current node to its parent */
-void recursiveCuts(AEGraph* parent, AEGraph* curr, std::vector<int>& where,
+void recursiveCuts(AEGraph* parent, AEGraph* curr, std::vector<int> where,
                    int iChild) {
     if (where.size() == 0) {
         AEGraph toAdd = curr->subgraphs[0];
@@ -296,23 +296,80 @@ void recursiveCuts(AEGraph* parent, AEGraph* curr, std::vector<int>& where,
 // Task 2
 AEGraph AEGraph::double_cut(std::vector<int> where) const {
     AEGraph toModify(repr());
-    recursiveCuts(nullptr, &toModify, where, NULL);
+    recursiveCuts(nullptr, &toModify, where, -1);
     return toModify;
+}
+
+/*  Find every erasure we can do
+    node - the current node
+    level - the level of the current node
+    path - the path to the current node
+    erasures - all the erasures possible */
+void findErasures(const AEGraph* node, int level, std::vector<int>& path,
+                  std::vector<std::vector<int>>& erasures) {
+    level++;
+    if (level == 0 && node->size() == 1) {
+        // A special case, where we can erase everything (level 0)
+        erasures.push_back({0});
+    }
+
+    // If we are on an even level in the graph and there are
+    // at least 2 elements
+    if (level % 2 == 0 && node->size() > 1) {
+        for (int i = 0; i < node->num_subgraphs(); i++) {
+            std::vector<int> temp = path;
+            temp.push_back(i);
+            erasures.push_back(temp);
+        }
+
+        for (int i = 0; i < node->num_atoms(); i++) {
+            std::vector<int> temp = path;
+            temp.push_back(i + node->num_subgraphs());
+            erasures.push_back(temp);
+        }
+    }
+
+    // Move on with the search on the other subgraphs
+    for (int i = 0; i < node->num_subgraphs(); i++) {
+        std::vector<int> temp = path;
+        temp.push_back(i);
+        findErasures(&node->subgraphs[i], level, temp, erasures);
+    }
 }
 
 // Task 3
 std::vector<std::vector<int>> AEGraph::possible_erasures(int level) const {
     std::vector<int> possiblePaths;
-    std::vector<std::vector<int>> possibleErasures;
-    std::string representation;
+    std::vector<std::vector<int>> pErasures;
 
-    return possibleErasures;
+    findErasures(this, level, possiblePaths, pErasures);
+
+    return pErasures;
 }
 
 // Task 4
-AEGraph AEGraph::erase(std::vector<int> where) const { 
-    
-    return AEGraph("()"); 
+AEGraph AEGraph::erase(std::vector<int> where) const {
+    bool ok = 1;
+    AEGraph toModify(this->repr());
+    AEGraph* node = &toModify;
+
+    while (ok) {
+        if (where.size() == 1) {
+            int k = node->num_subgraphs();
+            if (where[0] < k) {
+                node->subgraphs.erase(node->subgraphs.begin() + where[0]);
+            } else {
+                node->atoms.erase(node->atoms.begin() + where[0] - k);
+            }
+            ok = false;
+        } else {
+            int index = where.front();
+            where.erase(where.begin());
+            node = &node->subgraphs[index];
+        }
+    }
+
+    return toModify;
 }
 
 /*  A get_paths function that actually works well
@@ -405,9 +462,8 @@ std::vector<std::vector<int>> AEGraph::possible_deiterations() const {
 
 /*  Search for the element that need to be deiterated
     curr - current node
-    the current path (where to deiterate)
- */
-void recursiveDeiteration(AEGraph* curr, std::vector<int>& where) {
+    the current path (where to deiterate) */
+void recursiveDeiteration(AEGraph* curr, std::vector<int> where) {
     // If we reached the final child location
     if (where.size() == 1) {
         int k = curr->subgraphs.size();
