@@ -300,8 +300,8 @@ AEGraph AEGraph::double_cut(std::vector<int> where) const {
     return toModify;
 }
 
+// Task 3
 std::vector<std::vector<int>> AEGraph::possible_erasures(int level) const {
-    // 10p
     std::vector<int> possiblePaths;
     std::vector<std::vector<int>> possibleErasures;
     std::string representation;
@@ -309,14 +309,12 @@ std::vector<std::vector<int>> AEGraph::possible_erasures(int level) const {
     return possibleErasures;
 }
 
-AEGraph AEGraph::erase(std::vector<int> where) const {
-    // 10p
-    return AEGraph("()");
-}
+// Task 4
+AEGraph AEGraph::erase(std::vector<int> where) const { return AEGraph("()"); }
 
-// A get_paths function that actually works well
-// (while still not showing paths to single children, that can't be eliminated)
-// So, it is optimised for the deiterations function
+/*  A get_paths function that actually works well
+    (while still not showing paths to single children, that can't be eliminated)
+    So, it is optimised for the deiterations function */
 void betterGetPaths(const AEGraph* curr, const std::string query,
                     std::vector<int>& cp,
                     std::vector<std::vector<int>>& paths) {
@@ -344,9 +342,15 @@ void betterGetPaths(const AEGraph* curr, const std::string query,
     }
 }
 
-void recursiveDeiterations(const AEGraph* curr,
-                           std::vector<std::vector<int>>& paths) {
+/*  Search for places where deiterations can be done
+    curr - the current subgraph we are in
+    cp - the path to the current node
+    paths - all the paths found so far */
+void findDeiterations(const AEGraph* curr, std::vector<int>& cp,
+                      std::vector<std::vector<int>>& paths) {
     int k = curr->num_subgraphs();
+    std::vector<int> next;
+
     for (int i = 0; i < curr->size(); i++) {
         std::string query;
 
@@ -358,28 +362,71 @@ void recursiveDeiterations(const AEGraph* curr,
             query = curr->atoms[i - k];
         }
 
+        // Search for the element in every subgraph
+        // (except him, if it is a subgraph)
         for (int j = 0; j < k; j++) {
             if (j != i) {
-                std::vector<std::vector<int>> cp;
-                std::vector<int> aux;
+                std::vector<std::vector<int>> foundPaths;
+                std::vector<int> aux = cp;
                 aux.push_back(j);
-                betterGetPaths(&curr->subgraphs[j], query, aux, cp);
-                for (auto& it : cp) {
+                betterGetPaths(&curr->subgraphs[j], query, aux, foundPaths);
+                for (auto& it : foundPaths) {
                     paths.push_back(it);
+                }
+
+                // If it found no path, we can continue
+                // the operation in that subgraph
+                if (foundPaths.empty()) {
+                    next.push_back(j);
                 }
             }
         }
     }
+
+    // Continue the search for deiterations in the available subgraphs
+    for (auto& it : next) {
+        std::vector<int> temp = cp;
+        temp.push_back(it);
+        findDeiterations(&curr->subgraphs[it], temp, paths);
+    }
 }
 
+// Task 5
 std::vector<std::vector<int>> AEGraph::possible_deiterations() const {
     // 20p
     std::vector<std::vector<int>> paths;
-    recursiveDeiterations(this, paths);
+    std::vector<int> aux;
+    findDeiterations(this, aux, paths);
     return paths;
 }
 
+/*  Search for the element that need to be deiterated
+    curr - current node
+    the current path (where to deiterate)
+ */
+void recursiveDeiteration(AEGraph* curr, std::vector<int>& where) {
+    // If we reached the final child location
+    if (where.size() == 1) {
+        int k = curr->subgraphs.size();
+        if (where[0] < k) {
+            curr->subgraphs.erase(curr->subgraphs.begin() + where[0]);
+        } else {
+            // Because the first k elements are the subgraphs, we need
+            // to substract that from the index to find the desired atom
+            curr->atoms.erase(curr->atoms.begin() + where[0] - k);
+        }
+        return;
+    } else {
+        // Search in the next child
+        int index = where.front();
+        where.erase(where.begin());
+        recursiveDeiteration(&curr->subgraphs[index], where);
+    }
+}
+
+// Task 6
 AEGraph AEGraph::deiterate(std::vector<int> where) const {
-    // 10p
-    return AEGraph("()");
+    AEGraph toModify(repr());
+    recursiveDeiteration(&toModify, where);
+    return toModify;
 }
