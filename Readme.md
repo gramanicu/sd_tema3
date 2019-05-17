@@ -1,3 +1,3 @@
 # Existential Graphs Reasoner
 
-© 2019 Grama Nicolae, 312CA
+© 2019 Grama Nicolae & Matei Cristian Nicusor
