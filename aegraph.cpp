@@ -337,35 +337,67 @@ void findErasures(const AEGraph* node, int level, std::vector<int>& path,
     }
 }
 
+/*  Find every erasure we can do
+    curr - the current node
+    cp - the path to the current node
+    level - the level of the current node
+    paths - all the erasures possible */
+void findErasures(const AEGraph* curr, std::vector<int>& cp, int level,
+                  std::vector<std::vector<int>>& paths) {
+    level++;
+    if (level == 0 && curr->size() == 1) {
+        // A special case, where we can erase everything (level 0)
+        paths.push_back({0});
+    }
+
+    // If we are on an even level in the graph and there are
+    // at least 2 elements
+    if (level % 2 == 0 && curr->size() > 1) {
+        for (int i = 0; i < curr->size(); i++) {
+            std::vector<int> temp = cp;
+            std::vector<std::vector<int>> foundPaths;
+            temp.push_back(i);
+            paths.push_back(temp);
+        }
+    }
+
+    // Move on with the search on the other subgraphs
+    for (int it = 0; it < curr->num_subgraphs(); it++) {
+        std::vector<int> temp = cp;
+        temp.push_back(it);
+        findErasures(&(curr->subgraphs[it]), temp, level, paths);
+    }
+}
+
 // Task 3
 std::vector<std::vector<int>> AEGraph::possible_erasures(int level) const {
-    std::vector<int> possiblePaths;
-    std::vector<std::vector<int>> pErasures;
-
-    findErasures(this, level, possiblePaths, pErasures);
-
-    return pErasures;
+    std::vector<std::vector<int>> paths;
+    std::vector<int> aux;
+    findErasures(this, aux, level, paths);
+    return paths;
 }
 
 // Task 4
 AEGraph AEGraph::erase(std::vector<int> where) const {
-    bool ok = 1;
     AEGraph toModify(this->repr());
     AEGraph* node = &toModify;
+    bool ok = 1;
 
     while (ok) {
         if (where.size() == 1) {
-            int k = node->num_subgraphs();
+            int k = node->subgraphs.size();
+
             if (where[0] < k) {
                 node->subgraphs.erase(node->subgraphs.begin() + where[0]);
             } else {
                 node->atoms.erase(node->atoms.begin() + where[0] - k);
             }
-            ok = false;
+
+            ok = 0;
         } else {
             int index = where.front();
             where.erase(where.begin());
-            node = &node->subgraphs[index];
+            node = &(node->subgraphs[index]);
         }
     }
 
